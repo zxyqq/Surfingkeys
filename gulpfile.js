@@ -97,6 +97,8 @@ gulp.task('build_background', function() {
     if (buildTarget === "Firefox") {
         background.unshift("firefox_bg.js");
         gulp.src("firefox_pac.js").pipe(gulp.dest(`dist/${buildTarget}-extension`));
+    } else if (buildTarget === "Edge") {
+        background.unshift("edge_bg.js");
     } else {
         background.unshift("chrome_bg.js");
     }
@@ -124,6 +126,9 @@ gulp.task('build_common_content_min', function() {
     if (buildTarget === "Firefox") {
         common_content.push("libs/shadydom.min.js");
         common_content.push("content_scripts/firefox_fg.js");
+    } else if (buildTarget === "Edge") {
+        common_content.push("libs/shadydom.min.js");
+        common_content.unshift("content_scripts/edge_fg.js");
     } else {
         common_content.push("content_scripts/chrome_fg.js");
     }
@@ -143,6 +148,23 @@ gulp.task('build_manifest', gulp.series('copy-non-js-files', 'copy-html-files', 
             page: "pages/options.html"
         };
         json.content_security_policy = "script-src 'self'; object-src 'self'";
+    } else if (buildTarget === "Edge") {
+        json.content_scripts.forEach(function(cs) {
+            cs.matches = ["*://*/*"];
+        });
+        json.background.persistent = false;
+        json["-ms-preload"] = {
+            "backgroundScript": "backgroundScriptsAPIBridge.js",
+            "contentScript": "contentScriptsAPIBridge.js"
+        };
+        json.permissions.push("tts");
+        json.permissions.push("downloads.shelf");
+        json.options_page = "pages/options.html";
+        json.sandbox = {
+            "pages": [
+                "pages/sandbox.html"
+            ]
+        };
     } else {
         json.permissions.push("tts");
         json.permissions.push("downloads.shelf");
@@ -205,3 +227,9 @@ gulp.task('set_target_firefox', function (cb) {
     cb();
 });
 gulp.task('firefox', gulp.series(['set_target_firefox', 'build']));
+
+gulp.task('set_target_edge', function (cb) {
+    buildTarget = "Edge";
+    cb();
+});
+gulp.task('edge', gulp.series(['set_target_edge', 'build']));

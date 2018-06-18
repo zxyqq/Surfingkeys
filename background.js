@@ -215,7 +215,7 @@ var ChromeService = (function() {
     function handleMessage(_message, _sender, _sendResponse, _port) {
         var tid = 0;
         // no tab set if message is from pages/popup.html
-        if (_sender.tab) {
+        if (_sender && _sender.tab) {
             tid = _sender.tab.id;
             if (!frames.hasOwnProperty(tid)) {
                 frames[tid] = {index: 0, list: []};
@@ -358,9 +358,6 @@ var ChromeService = (function() {
 
         _updateTabIndices();
     });
-    chrome.tabs.onMoved.addListener(function() {
-        _updateTabIndices();
-    });
     chrome.tabs.onActivated.addListener(function(activeInfo) {
         if (tabURLs.hasOwnProperty(activeInfo.tabId) && !historyTabAction && activeInfo.tabId != tabHistory[tabHistory.length - 1]) {
             if (tabHistory.length > 10) {
@@ -384,47 +381,54 @@ var ChromeService = (function() {
     chrome.tabs.onAttached.addListener(function() {
         _updateTabIndices();
     });
-    chrome.commands.onCommand.addListener(function(command) {
-        switch (command) {
-            case 'restartext':
-                chrome.runtime.reload();
-                break;
-            case 'previousTab':
-            case 'nextTab':
-                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                    var tab = tabs[0];
-                    var index = (command === 'previousTab') ? tab.index - 1 : tab.index + 1;
-                    chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
-                        index = ((index % tabs.length) + tabs.length) % tabs.length;
-                        chrome.tabs.update(tabs[index].id, { active: true });
-                    });
-                });
-                break;
-            case 'closeTab':
-                chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-                    chrome.tabs.remove(tabs[0].id);
-                });
-                break;
-            case 'proxyThis':
-                chrome.tabs.query({
-                    currentWindow: true,
-                    active: true
-                }, function(resp) {
-                    var host = new URL(resp[0].url).host;
-                    updateProxy({
-                        host: host,
-                        operation: "toggle"
-                    }, function() {
-                        chrome.tabs.reload(resp[0].id, {
-                            bypassCache: true
+
+    if (window.navigator.userAgent.indexOf("Edge") === -1) {
+        // Microsoft Edge does not provide below interfaces.
+        chrome.tabs.onMoved.addListener(function() {
+            _updateTabIndices();
+        });
+        chrome.commands.onCommand.addListener(function(command) {
+            switch (command) {
+                case 'restartext':
+                    chrome.runtime.reload();
+                    break;
+                case 'previousTab':
+                case 'nextTab':
+                    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                        var tab = tabs[0];
+                        var index = (command === 'previousTab') ? tab.index - 1 : tab.index + 1;
+                        chrome.tabs.query({ windowId: tab.windowId }, function(tabs) {
+                            index = ((index % tabs.length) + tabs.length) % tabs.length;
+                            chrome.tabs.update(tabs[index].id, { active: true });
                         });
                     });
-                });
-                break;
-            default:
-                break;
-        }
-    });
+                    break;
+                case 'closeTab':
+                    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+                        chrome.tabs.remove(tabs[0].id);
+                    });
+                    break;
+                case 'proxyThis':
+                    chrome.tabs.query({
+                        currentWindow: true,
+                        active: true
+                    }, function(resp) {
+                        var host = new URL(resp[0].url).host;
+                        updateProxy({
+                            host: host,
+                            operation: "toggle"
+                        }, function() {
+                            chrome.tabs.reload(resp[0].id, {
+                                bypassCache: true
+                            });
+                        });
+                    });
+                    break;
+                default:
+                    break;
+            }
+        });
+    }
     chrome.runtime.onMessage.addListener(handleMessage);
     function _response(message, sendResponse, result) {
         result.action = message.action;
