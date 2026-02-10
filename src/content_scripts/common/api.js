@@ -401,6 +401,7 @@ function createAPI(clipboard, insert, normal, hints, visual, front, browser) {
         let query = window.getSelection().toString();
         clipboard.read(function(response) {
             query = query || response.data;
+            query = query.replace(/%c2%a0/gi, '').trim();
             if (onlyThisSite) {
                 query = "site:" + window.location.hostname + " " + query;
             }
