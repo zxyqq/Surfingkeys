@@ -1072,6 +1072,35 @@ function start(browser) {
             chrome.tabs.move(tab.id, {windowId, index: -1});
         });
     };
+
+    self.gatherSameDomainTabs = function(message, sender, sendResponse) {  
+        const { domain } = message;  
+          
+        // 获取所有标签页  
+        chrome.tabs.query({}, function(tabs) {  
+            const sameDomainTabs = tabs.filter(tab => {  
+                try {  
+                    return new URL(tab.url).hostname === domain;  
+                } catch (e) {  
+                    return false;  
+                }  
+            });  
+              
+            if (sameDomainTabs.length > 0) {  
+                // 使用第一个标签页创建新窗口  
+                chrome.windows.create({tabId: sameDomainTabs[0].id}, function(newWindow) {  
+                    // 移动剩余的标签页到新窗口  
+                    sameDomainTabs.slice(1).forEach((tab, index) => {  
+                        chrome.tabs.move(tab.id, {  
+                            windowId: newWindow.id,  
+                            index: index + 1  
+                        });  
+                    });  
+                });  
+            }  
+        });  
+    };
+
     self.getBookmarkFolders = function(message, sender, sendResponse) {
         chrome.bookmarks.getTree(function(tree) {
             bookmarkFolders = [];
