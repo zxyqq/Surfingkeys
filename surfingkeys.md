@@ -1,4 +1,15 @@
 # 2026/3/18
+Surfingkeys 1.18.0
+gfbliohnnapiefjpjlpjnehglfpaknnc
+
+dev自定义编译的
+ID：jkplhejngjafemidhdpngbpggoaakimc
+
+是否可以指定编译的id，需要作者的私钥，基本不可能给
+chrome通过设置白名单参数解决了
+--whitelisted-extension=jkplhejngjafemidhdpngbpggoaakimc
+
+# 2026/3/18
 在当前窗口执行后，将所有窗口中和它相同的域名的都移动到一个新的窗口
 当前在surfingkeys中提供了如下2个映射可组合达到效果，
 能否做到一个新的函数一步达到效果呢
