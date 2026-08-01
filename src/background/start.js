@@ -1115,6 +1115,26 @@ function start(browser) {
         });  
     };
 
+    self.closeSameDomainTabs = function(message, sender, sendResponse) {  
+        const { domain } = message;  
+
+        // 获取所有标签页  
+        chrome.tabs.query({}, function(tabs) {  
+            const sameDomainTabs = tabs.filter(tab => {  
+                try {  
+                    return new URL(tab.url).hostname === domain;  
+                } catch (e) {  
+                    return false;  
+                }  
+            });  
+
+            if (sameDomainTabs.length > 0) {  
+                // 关闭所有同域名标签页  
+                chrome.tabs.remove(sameDomainTabs.map(tab => tab.id));  
+            }  
+        });  
+    };
+
     self.getBookmarkFolders = function(message, sender, sendResponse) {
         chrome.bookmarks.getTree(function(tree) {
             bookmarkFolders = [];
