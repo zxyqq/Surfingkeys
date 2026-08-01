@@ -629,9 +629,19 @@ function start(browser) {
                         if (tabs[0].id === sender.tab.id) {
                             _setScrollPos_bg(tabs[0].id);
                         } else {
-                            chrome.tabs.update(tabs[0].id, {
-                                active: true
-                            });
+                            if (tabs[0].windowId !== sender.tab.windowId) {
+                                chrome.windows.update(tabs[0].windowId, {
+                                    focused: true
+                                }, function() {
+                                    chrome.tabs.update(tabs[0].id, {
+                                        active: true
+                                    });
+                                });
+                            } else {
+                                chrome.tabs.update(tabs[0].id, {
+                                    active: true
+                                });
+                            }
                         }
                     }
                 });
